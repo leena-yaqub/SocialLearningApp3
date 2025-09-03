@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "238700441737",
+    "project_id": "social-learning-app-16896",
+    "storage_bucket": "social-learning-app-16896.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238700441737:android:74c7d3254e568b3d385658",
+        "android_client_info": {
+          "package_name": "com.example.sociallearningapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2fNsSaLsuVgRJi485Sut-5u6BeJn_mDo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
