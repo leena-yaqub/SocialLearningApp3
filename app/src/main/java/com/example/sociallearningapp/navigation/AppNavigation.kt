@@ -9,17 +9,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.sociallearningapp.MainActivity
 import com.example.sociallearningapp.ads.AdsManager
 import com.example.sociallearningapp.data.PreferencesManager
-import com.example.sociallearningapp.screens.LoginScreen
-import com.example.sociallearningapp.screens.MainScreen
-import com.example.sociallearningapp.screens.OnboardingScreen
-import com.example.sociallearningapp.screens.RegisterScreen
-import com.example.sociallearningapp.screens.SplashScreen
-import com.example.sociallearningapp.viewmodel.MainViewModel
+import com.example.sociallearningapp.data.repository.ChatRepository
+import com.example.sociallearningapp.data.repository.QuizRepository
+import com.example.sociallearningapp.data.repository.TaskRepository
+import com.example.sociallearningapp.screens.*
+import com.example.sociallearningapp.viewmodel.*
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -30,6 +31,23 @@ fun AppNavigation(
     modifier: Modifier = Modifier
 ) {
     val mainViewModel: MainViewModel = viewModel()
+
+    val quizRepository = QuizRepository()
+    val taskRepository = TaskRepository()
+    val chatRepository = ChatRepository()
+
+    val quizViewModel: QuizViewModel = viewModel(
+        factory = QuizViewModelFactory(quizRepository)
+    )
+    val taskViewModel: TaskViewModel = viewModel(
+        factory = TaskViewModelFactory(taskRepository)
+    )
+    val profileViewModel: ProfileViewModel = viewModel(
+        factory = ProfileViewModelFactory(quizRepository, taskRepository)
+    )
+    val chatViewModel: ChatViewModel = viewModel(
+        factory = ChatViewModelFactory(chatRepository)
+    )
 
     NavHost(
         navController = navController,
@@ -94,19 +112,37 @@ fun AppNavigation(
         }
         composable("main") {
             MainScreen(
-                viewModel = mainViewModel,
-                onNavigateToQuiz = { navController.navigate("quiz_list") }
+                quizViewModel = quizViewModel,
+                taskViewModel = taskViewModel,
+                chatViewModel = chatViewModel,
+                onNavigateToProfile = { navController.navigate("profile") },
+                onNavigateToQuiz = {
+                    navController.navigate("quiz_list")
+                },
+                onNavigateToTasks = {
+                    navController.navigate("tasks")
+                },
+                onNavigateToChat = {
+                    navController.navigate("chat")
+                }
             )
         }
-        composable("quiz_list") {
-            val quizViewModel: QuizViewModel = viewModel(factory = QuizViewModelFactory(QuizRepository()))
-            QuizListScreen(viewModel = quizViewModel, onNavigateToQuiz = { quizId ->
-                navController.navigate("quiz_detail/$quizId")
-            })
+        composable("profile") {
+            ProfileScreen(viewModel = profileViewModel)
         }
-        composable("quiz_detail/{quizId}", arguments = listOf(navArgument("quizId") { type = NavType.LongType })) { backStackEntry ->
+        composable("quiz_list") {
+            QuizListScreen(
+                viewModel = quizViewModel,
+                onNavigateToQuiz = { quizId ->
+                    navController.navigate("quiz_detail/$quizId")
+                }
+            )
+        }
+        composable(
+            "quiz_detail/{quizId}",
+            arguments = listOf(navArgument("quizId") { type = NavType.LongType })
+        ) { backStackEntry ->
             val quizId = backStackEntry.arguments?.getLong("quizId") ?: 0L
-            val quizViewModel: QuizViewModel = viewModel(factory = QuizViewModelFactory(QuizRepository()))
             QuizDetailScreen(
                 quizViewModel = quizViewModel,
                 quizId = quizId,
@@ -119,7 +155,6 @@ fun AppNavigation(
             )
         }
         composable("quiz_result") {
-            val quizViewModel: QuizViewModel = viewModel(factory = QuizViewModelFactory(QuizRepository()))
             QuizResultScreen(
                 viewModel = quizViewModel,
                 onNavigateToHistory = { navController.navigate("quiz_history") },
@@ -127,11 +162,16 @@ fun AppNavigation(
             )
         }
         composable("quiz_history") {
-            val quizViewModel: QuizViewModel = viewModel(factory = QuizViewModelFactory(QuizRepository()))
             QuizHistoryScreen(
                 viewModel = quizViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+        composable("tasks") {
+            TaskScreen(viewModel = taskViewModel)
+        }
+        composable("chat") {
+            ChatScreen(viewModel = chatViewModel)
         }
     }
 }
