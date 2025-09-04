@@ -93,8 +93,45 @@ fun AppNavigation(
             )
         }
         composable("main") {
-            // This will be a placeholder for now
-            MainScreen(viewModel = mainViewModel, onNavigateToQuiz = {})
+            MainScreen(
+                viewModel = mainViewModel,
+                onNavigateToQuiz = { navController.navigate("quiz_list") }
+            )
+        }
+        composable("quiz_list") {
+            val quizViewModel: QuizViewModel = viewModel(factory = QuizViewModelFactory(QuizRepository()))
+            QuizListScreen(viewModel = quizViewModel, onNavigateToQuiz = { quizId ->
+                navController.navigate("quiz_detail/$quizId")
+            })
+        }
+        composable("quiz_detail/{quizId}", arguments = listOf(navArgument("quizId") { type = NavType.LongType })) { backStackEntry ->
+            val quizId = backStackEntry.arguments?.getLong("quizId") ?: 0L
+            val quizViewModel: QuizViewModel = viewModel(factory = QuizViewModelFactory(QuizRepository()))
+            QuizDetailScreen(
+                quizViewModel = quizViewModel,
+                quizId = quizId,
+                onNavigateBack = { navController.popBackStack() },
+                onQuizComplete = {
+                    navController.navigate("quiz_result") {
+                        popUpTo("quiz_detail/{quizId}") { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable("quiz_result") {
+            val quizViewModel: QuizViewModel = viewModel(factory = QuizViewModelFactory(QuizRepository()))
+            QuizResultScreen(
+                viewModel = quizViewModel,
+                onNavigateToHistory = { navController.navigate("quiz_history") },
+                onNavigateToHome = { navController.navigate("main") }
+            )
+        }
+        composable("quiz_history") {
+            val quizViewModel: QuizViewModel = viewModel(factory = QuizViewModelFactory(QuizRepository()))
+            QuizHistoryScreen(
+                viewModel = quizViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

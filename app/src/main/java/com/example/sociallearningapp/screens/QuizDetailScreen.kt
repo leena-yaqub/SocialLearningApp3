@@ -7,26 +7,39 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.sociallearningapp.data.SampleQuizData
+import com.example.sociallearningapp.viewmodel.QuizViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun QuizDetailScreen(
-    quizName: String,
+    quizViewModel: QuizViewModel,
+    quizId: Long,
     onNavigateBack: () -> Unit,
-    onQuizComplete: (score: Int) -> Unit
+    onQuizComplete: () -> Unit
 ) {
-    var currentQuestion by remember { mutableStateOf(0) }
-    var score by remember { mutableStateOf(0) }
-    var selectedAnswer by remember { mutableStateOf(-1) }
-
-    // Use actual quiz data from SampleQuizData
-    val questions = when (quizName.lowercase()) {
-        "math quiz" -> SampleQuizData.getMathQuestions()
-        "science quiz" -> SampleQuizData.getScienceQuestions()
-        "history quiz" -> SampleQuizData.getHistoryQuestions()
-        else -> SampleQuizData.getGeneralKnowledgeQuestions()
+    LaunchedEffect(quizId) {
+        quizViewModel.startQuiz(quizId)
     }
+
+    val questions by quizViewModel.questions.collectAsState()
+    val currentQuestionIndex by quizViewModel.currentQuestionIndex.collectAsState()
+    val timeRemaining by quizViewModel.timeRemaining.collectAsState()
+    val isQuizFinished by quizViewModel.isQuizFinished.collectAsState()
+
+    LaunchedEffect(currentQuestionIndex) {
+        while (timeRemaining > 0) {
+            delay(1000)
+            quizViewModel.decrementTime()
+        }
+    }
+
+    if (isQuizFinished) {
+        LaunchedEffect(Unit) {
+            onQuizComplete()
+        }
+    }
+
+    val currentQuestion = questions.getOrNull(currentQuestionIndex)
 
     Column(
         modifier = Modifier
@@ -34,54 +47,35 @@ fun QuizDetailScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = quizName,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        if (currentQuestion < questions.size) {
-            val currentQ = questions[currentQuestion]
-
+        if (currentQuestion != null) {
             Text(
-                text = "Question ${currentQuestion + 1} of ${questions.size}",
-                fontSize = 16.sp
+                text = "Question ${currentQuestionIndex + 1}/${questions.size}",
+                style = MaterialTheme.typography.headlineSmall
             )
-
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Time Remaining: $timeRemaining",
+                style = MaterialTheme.typography.bodyLarge
+            )
             Spacer(modifier = Modifier.height(16.dp))
-
             Text(
-                text = currentQ.question,
-                fontSize = 18.sp
+                text = currentQuestion.question,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
             )
-
             Spacer(modifier = Modifier.height(32.dp))
-
-            // Display all options dynamically
-            currentQ.options.forEachIndexed { index, option ->
+            currentQuestion.options.forEachIndexed { index, option ->
                 Button(
-                    onClick = {
-                        selectedAnswer = index
-                        if (index == currentQ.correctAnswer) {
-                            score++
-                        }
-                        // Move to next question or complete quiz
-                        if (currentQuestion < questions.size - 1) {
-                            currentQuestion++
-                            selectedAnswer = -1
-                        } else {
-                            onQuizComplete(score)
-                        }
-                    },
+                    onClick = { quizViewModel.submitAnswer(index) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
                 ) {
-                    Text(option)
+                    Text(text = option)
                 }
             }
+        } else {
+            CircularProgressIndicator()
         }
     }
 }
