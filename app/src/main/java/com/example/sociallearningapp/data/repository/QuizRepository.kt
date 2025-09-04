@@ -1,41 +1,57 @@
-package com.example.sociallearningapp.repository
+package com.example.sociallearningapp.data.repository
 
-import com.example.sociallearningapp.data.model.Quiz
-import com.example.sociallearningapp.data.model.QuizResult
-import com.example.sociallearningapp.data.dao.QuizDao
-import com.example.sociallearningapp.data.dao.QuizResultDao
 import com.example.sociallearningapp.data.SampleQuizData
+import com.example.sociallearningapp.data.model.Quiz
+import com.example.sociallearningapp.data.model.QuizQuestion
+import com.example.sociallearningapp.data.model.QuizResult
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
-import javax.inject.Singleton
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 
-@Singleton
-class QuizRepository @Inject constructor(
-    private val quizDao: QuizDao,
-    private val quizResultDao: QuizResultDao
-) {
+class QuizRepository {
 
-    fun getAllQuizzes(): Flow<List<Quiz>> = quizDao.getAllQuizzes()
+    private val auth = FirebaseAuth.getInstance()
+    private val database = FirebaseDatabase.getInstance()
 
-    suspend fun getQuizById(id: Long): Quiz? = quizDao.getQuizById(id)
+    fun getAllQuizzes(): Flow<List<Quiz>> = flow {
+        // For now, we use hardcoded sample data.
+        // In a real app, this might fetch from Firebase or a local DB.
+        emit(SampleQuizData.getQuizzes())
+    }
 
-    suspend fun insertQuiz(quiz: Quiz): Long = quizDao.insertQuiz(quiz)
+    suspend fun getQuizById(quizId: Long): Quiz? {
+        return SampleQuizData.getQuizzes().find { it.id == quizId }
+    }
 
-    suspend fun insertSampleQuizzes() {
-        SampleQuizData.getAllSampleQuizzes().forEach { quiz ->
-            insertQuiz(quiz)
+    fun getQuestionsForQuiz(quizId: Long): List<QuizQuestion> {
+        return when (quizId) {
+            1L -> SampleQuizData.getMathQuestions()
+            2L -> SampleQuizData.getScienceQuestions()
+            3L -> SampleQuizData.getHistoryQuestions()
+            else -> SampleQuizData.getGeneralKnowledgeQuestions()
         }
     }
 
-    fun getUserQuizResults(userId: String): Flow<List<QuizResult>> =
-        quizResultDao.getUserQuizResults(userId)
+    suspend fun saveQuizResult(result: QuizResult) {
+        auth.currentUser?.uid?.let { userId ->
+            val resultId = database.getReference("quiz_results").child(userId).push().key
+            if (resultId != null) {
+                // We don't need to save the push key as the ID in this case,
+                // as Firebase keys are unique.
+                database.getReference("quiz_results").child(userId).child(resultId).setValue(result).await()
+            }
+        }
+    }
 
-    suspend fun saveQuizResult(result: QuizResult): Long =
-        quizResultDao.insertQuizResult(result)
-
-    suspend fun getQuizCountForUser(userId: String): Int =
-        quizResultDao.getQuizCountForUser(userId)
-
-    suspend fun getAverageScoreForUser(userId: String): Double =
-        quizResultDao.getAverageScoreForUser(userId) ?: 0.0
+    fun getQuizHistory(userId: String): Flow<List<QuizResult>> = flow {
+        val quizResults = mutableListOf<QuizResult>()
+        database.getReference("quiz_results").child(userId).get().await().children.forEach { dataSnapshot ->
+            dataSnapshot.getValue(QuizResult::class.java)?.let { quizResult ->
+                quizResults.add(quizResult)
+            }
+        }
+        emit(quizResults.sortedByDescending { it.timestamp })
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.sociallearningapp.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,29 +13,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.sociallearningapp.viewmodel.QuizViewModel
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
-fun QuizHistoryScreen(
+fun QuizListScreen(
     viewModel: QuizViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateToQuiz: (Long) -> Unit
 ) {
-    val quizHistory by viewModel.getQuizHistory().collectAsState(initial = emptyList())
+    val quizzes by viewModel.availableQuizzes.collectAsState(initial = emptyList())
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(quizHistory) { result ->
+        items(quizzes) { quiz ->
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToQuiz(quiz.id) }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = result.quizName, style = MaterialTheme.typography.headlineSmall)
-                    Text(text = "Score: ${result.score}/${result.totalQuestions}")
-                    Text(text = "Date: ${SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(result.timestamp))}")
+                    Text(text = quiz.name, style = MaterialTheme.typography.headlineSmall)
+                    Text(text = quiz.description)
                 }
             }
         }

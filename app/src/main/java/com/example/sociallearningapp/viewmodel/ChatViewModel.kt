@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/sociallearningapp/viewmodel/ChatViewModel.kt
 package com.example.sociallearningapp.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -6,89 +5,45 @@ import androidx.lifecycle.viewModelScope
 import com.example.sociallearningapp.data.model.ChatMessage
 import com.example.sociallearningapp.data.model.User
 import com.example.sociallearningapp.data.repository.ChatRepository
-import kotlinx.coroutines.flow.*
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class ChatViewModel : ViewModel() {
-    private val repository = ChatRepository()
+class ChatViewModel(private val repository: ChatRepository) : ViewModel() {
 
-    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
-    val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
+    private val auth = FirebaseAuth.getInstance()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    val messages: StateFlow<List<ChatMessage>> = repository.getMessagesFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-
-    private val _onlineUsers = MutableStateFlow<List<User>>(emptyList())
-    val onlineUsers: StateFlow<List<User>> = _onlineUsers.asStateFlow()
+    val onlineUsers: StateFlow<List<User>> = repository.getOnlineUsersFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     init {
-        loadMessages()
-        loadOnlineUsers()
-        setUserOnline()
+        repository.setUserOnline()
     }
 
-    private fun loadMessages() {
+    fun sendMessage(messageText: String) {
         viewModelScope.launch {
-            try {
-                repository.getMessagesFlow().collect { messageList ->
-                    _messages.value = messageList
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Failed to load messages: ${e.message}"
-            }
+            val user = auth.currentUser ?: return@launch
+            val message = ChatMessage(
+                senderId = user.uid,
+                senderName = user.displayName ?: "Anonymous",
+                message = messageText,
+                timestamp = System.currentTimeMillis()
+            )
+            repository.sendMessage(message)
         }
     }
 
-    private fun loadOnlineUsers() {
-        viewModelScope.launch {
-            try {
-                repository.getOnlineUsersFlow().collect { users ->
-                    _onlineUsers.value = users
-                }
-            } catch (e: Exception) {
-                // Handle error silently for online users as it's not critical
-            }
-        }
-    }
-
-    private fun setUserOnline() {
-        viewModelScope.launch {
-            repository.setUserOnline()
-        }
-    }
-
-    fun sendMessage(message: String) {
-        if (message.trim().isEmpty()) return
-
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val success = repository.sendMessage(message.trim())
-                if (!success) {
-                    _errorMessage.value = "Failed to send message"
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Error sending message: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun getCurrentUserId(): String? = repository.getCurrentUserId()
-
-    fun clearError() {
-        _errorMessage.value = null
+    fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid
     }
 
     override fun onCleared() {
         super.onCleared()
-        // Set user offline when ViewModel is destroyed
-        viewModelScope.launch {
-            repository.setUserOffline()
-        }
+        repository.setUserOffline()
     }
 }
