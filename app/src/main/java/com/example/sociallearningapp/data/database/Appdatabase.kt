@@ -14,7 +14,6 @@ import com.example.sociallearningapp.data.dao.ChatMessageDao  // Fixed import pa
     entities = [
         User::class,
         Quiz::class,
-        QuizQuestion::class,
         QuizResult::class,
         Task::class,
         ChatMessage::class
