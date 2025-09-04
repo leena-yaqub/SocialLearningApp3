@@ -2,6 +2,8 @@
 package com.example.sociallearningapp.data.model
 
 import androidx.room.TypeConverter
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.util.*
 
 class Converters {
@@ -57,5 +59,25 @@ class Converters {
         } else {
             data.split(",").mapNotNull { it.trim().toIntOrNull() }
         }
+    }
+
+    @TypeConverter
+    fun fromQuizQuestionList(questions: List<QuizQuestion>?): String? {
+        if (questions == null) {
+            return null
+        }
+        val gson = Gson()
+        val type = object : TypeToken<List<QuizQuestion>>() {}.type
+        return gson.toJson(questions, type)
+    }
+
+    @TypeConverter
+    fun toQuizQuestionList(questionsString: String?): List<QuizQuestion>? {
+        if (questionsString == null) {
+            return null
+        }
+        val gson = Gson()
+        val type = object : TypeToken<List<QuizQuestion>>() {}.type
+        return gson.fromJson(questionsString, type)
     }
 }
