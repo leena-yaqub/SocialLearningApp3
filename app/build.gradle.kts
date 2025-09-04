@@ -108,6 +108,8 @@ dependencies {
     // Other dependencies
     implementation("com.google.android.gms:play-services-ads:22.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+    implementation("com.google.accompanist:accompanist-pager:0.28.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
