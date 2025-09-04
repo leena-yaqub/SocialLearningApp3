@@ -1,5 +1,6 @@
 package com.example.sociallearningapp.screens
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -11,7 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.sociallearningapp.MainActivity
+import com.example.sociallearningapp.ads.AdsManager
 import com.example.sociallearningapp.ads.BannerAd
 import com.example.sociallearningapp.data.PreferencesManager
 import com.google.accompanist.pager.*
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
 fun OnboardingScreen(
     onFinish: () -> Unit,
     preferencesManager: PreferencesManager,
-    adsManager: com.example.sociallearningapp.ads.AdsManager
+    adsManager: AdsManager
 ) {
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
@@ -49,7 +50,7 @@ fun OnboardingScreen(
                 onClick = {
                     scope.launch {
                         preferencesManager.setFirstLaunchComplete()
-                        adsManager.showInterstitialAd(context as MainActivity) {
+                        adsManager.showInterstitialAd(context as Activity) {
                             onFinish()
                         }
                     }

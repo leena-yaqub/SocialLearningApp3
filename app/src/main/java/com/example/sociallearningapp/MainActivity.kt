@@ -15,7 +15,7 @@ import com.example.sociallearningapp.ui.theme.SocialLearningAppTheme
 
 class MainActivity : ComponentActivity() {
 
-    lateinit var adsManager: AdsManager
+    private lateinit var adsManager: AdsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +34,8 @@ class MainActivity : ComponentActivity() {
 
                     AppNavigation(
                         navController = navController,
-                        preferencesManager = preferencesManager
+                        preferencesManager = preferencesManager,
+                        adsManager = adsManager
                     )
                 }
             }
