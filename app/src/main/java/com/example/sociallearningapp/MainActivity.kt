@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/sociallearningapp/MainActivity.kt
 package com.example.sociallearningapp
 
 import android.os.Bundle
@@ -8,16 +7,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.sociallearningapp.ads.AdsManager
 import com.example.sociallearningapp.data.PreferencesManager
 import com.example.sociallearningapp.navigation.AppNavigation
 import com.example.sociallearningapp.ui.theme.SocialLearningAppTheme
-import com.example.sociallearningapp.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
+
+    lateinit var adsManager: AdsManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        adsManager = AdsManager(this)
+        adsManager.loadInterstitialAd()
+
         setContent {
             SocialLearningAppTheme {
                 Surface(
@@ -25,12 +30,10 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    val mainViewModel: MainViewModel = viewModel()
                     val preferencesManager = PreferencesManager(this@MainActivity)
 
                     AppNavigation(
                         navController = navController,
-                        viewModel = mainViewModel,
                         preferencesManager = preferencesManager
                     )
                 }
