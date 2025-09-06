@@ -1,0 +1,51 @@
+diff --git a/app/src/main/java/com/example/sociallearningapp/viewmodel/QuizViewModel.kt b/app/src/main/java/com/example/sociallearningapp/viewmodel/QuizViewModel.kt
+index 1111111..2222222 100644
+--- a/app/src/main/java/com/example/sociallearningapp/viewmodel/QuizViewModel.kt
++++ b/app/src/main/java/com/example/sociallearningapp/viewmodel/QuizViewModel.kt
+@@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
+     private fun finishQuiz() {
+         viewModelScope.launch {
+             val score = calculateScore()
+-            val result = QuizResult(
+-                userId = auth.currentUser?.uid ?: "",
+-                quizId = _currentQuiz.value?.id ?: 0,
+-                quizName = _currentQuiz.value?.name ?: "",
+-                score = score,
+-                totalQuestions = _questions.value.size,
+-                timestamp = System.currentTimeMillis()
+-            )
++            val result = QuizResult(
++                userId = auth.currentUser?.uid ?: "",
++                quizId = _currentQuiz.value?.id ?: 0,
++                quizName = _currentQuiz.value?.name ?: "",
++                score = score,
++                totalQuestions = _questions.value.size,
++                timestamp = System.currentTimeMillis(),
++                timeSpent = 0L
++            )
+             repository.saveQuizResult(result)
+             _isQuizFinished.value = true
+         }
+diff --git a/app/src/main/java/com/example/sociallearningapp/viewmodel/TaskViewModel.kt b/app/src/main/java/com/example/sociallearningapp/viewmodel/TaskViewModel.kt
+index 3333333..4444444 100644
+--- a/app/src/main/java/com/example/sociallearningapp/viewmodel/TaskViewModel.kt
++++ b/app/src/main/java/com/example/sociallearningapp/viewmodel/TaskViewModel.kt
+@@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
+     fun addTask(title: String, description: String, priority: Priority) {
+         viewModelScope.launch {
+-            val task = Task(
+-                id = UUID.randomUUID().toString(),
+-                title = title,
+-                description = description,
+-                priority = priority
+-            )
++            val task = Task(
++                id = UUID.randomUUID().toString(),
++                userId = auth.currentUser?.uid ?: "",
++                title = title,
++                description = description,
++                priority = priority
++            )
+             repository.addTask(task)
+         }
+     }

@@ -6,12 +6,15 @@ import com.example.sociallearningapp.data.model.Priority
 import com.example.sociallearningapp.data.model.Task
 import com.example.sociallearningapp.data.repository.TaskRepository
 import kotlinx.coroutines.flow.SharingStarted
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.*
 
 class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
+
+    private val auth = FirebaseAuth.getInstance()
 
     val tasks: StateFlow<List<Task>> = repository.getTasksFlow()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -20,6 +23,7 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
         viewModelScope.launch {
             val task = Task(
                 id = UUID.randomUUID().toString(),
+                userId = auth.currentUser?.uid ?: "",
                 title = title,
                 description = description,
                 priority = priority

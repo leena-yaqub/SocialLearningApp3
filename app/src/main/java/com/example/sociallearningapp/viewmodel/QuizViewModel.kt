@@ -76,7 +76,8 @@ class QuizViewModel(private val repository: QuizRepository) : ViewModel() {
                 quizName = _currentQuiz.value?.name ?: "",
                 score = score,
                 totalQuestions = _questions.value.size,
-                timestamp = System.currentTimeMillis()
+                timestamp = System.currentTimeMillis(),
+                timeSpent = 0L
             )
             repository.saveQuizResult(result)
             _isQuizFinished.value = true
